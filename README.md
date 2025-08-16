@@ -27,7 +27,7 @@ A Python project with comprehensive lint and test automation.
    ```bash
    # Install production dependencies
    uv sync
-   
+
    # Install development dependencies
    uv sync --group dev
    ```

@@ -18,7 +18,7 @@ class TestMain:
         result = hello_world()
         assert isinstance(result, str)
 
-    @pytest.mark.slow
+    @pytest.mark.slow  # type: ignore[misc]
     def test_hello_world_performance(self) -> None:
         """Test that hello_world executes quickly."""
         import time
