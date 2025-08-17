@@ -19,9 +19,8 @@ The `snippets.toml` has the following configuration options:
 `project` section has high level config options.
 ```
 [project]
-dirs = [dir1, dir2]  # default [snippets]
+dir = "snippets"
 schema = "snippets-schema.json"
-auto_update_properties = ["slug", "title", "created_at", "updated_at", "created_by", "updated_by"]
 ```
 
 ## Folder structure
@@ -45,7 +44,6 @@ snippet text
 ## git hooks
 - `schema-validator.py` validates the schema file and ensure that it matches minimum constraints.
 - `snippet-validator-.py` validates each modified snippet based on schema.
-- `snippet-fixer.py` updates the `slug`, `title`, `created_by`, `updated_by`, `created_at` and `updated_at` fields.
 
 ## Schema
 

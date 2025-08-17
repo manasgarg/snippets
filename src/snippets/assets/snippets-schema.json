@@ -1,0 +1,29 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://schemas.example.com/snippet.schema.json",
+    "title": "Snippet",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "id": { "$ref": "#/$defs/ulid" },
+      "slug": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9-]{2,63}$"
+      },
+      "lang": {
+        "description": "BCP-47 language tag",
+        "type": "string",
+        "pattern": "^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$",
+        "default": "en"
+      }
+    },
+    "required": [
+      "id"
+    ],
+    "$defs": {
+      "ulid": {
+        "type": "string",
+        "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+      }
+    }
+}
