@@ -16,6 +16,7 @@ help:
 # Install production dependencies
 install:
 	uv sync
+	uv pip install -e .
 
 # Install development dependencies
 install-dev:
