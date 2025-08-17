@@ -3,6 +3,7 @@
 
 import importlib.resources
 import os
+import shutil
 
 import typer
 
@@ -14,6 +15,13 @@ SNIPPETS_TOML_CONTENT = """
 dir = "{snippets_dir}"
 schema = "snippets-schema.json"
 """
+
+
+def ensure_git_repo(folder: str) -> None:
+    """Ensure the given folder is a git repository."""
+    if not os.path.exists(os.path.join(folder, ".git")):
+        typer.echo(f"Error: {folder} is not a git repository")
+        raise typer.Exit(1)
 
 
 def create_snippets_toml(folder: str, snippets_dir: str) -> None:
@@ -80,14 +88,57 @@ def create_precommit_setup(folder: str, scripts_dir: str) -> None:
         pass_filenames: true"""
 
     if os.path.exists(precommit_config_path):
-        # Read existing content and check if snippets validator is already present
-        with open(precommit_config_path) as f:
-            existing_content = f.read()
+        # Read existing content and parse as YAML
+        import yaml
 
-        if "snippets-validator" not in existing_content:
-            # Append the snippets validator hook
-            with open(precommit_config_path, "a") as f:
-                f.write(snippets_hook_config)
+        with open(precommit_config_path) as f:
+            try:
+                config = yaml.safe_load(f) or {}
+            except yaml.YAMLError:
+                typer.echo(
+                    "Warning: Invalid YAML in .pre-commit-config.yaml, skipping update"
+                )
+                return
+
+        # Ensure repos list exists
+        if "repos" not in config:
+            config["repos"] = []
+
+        # Find or create local repo section
+        local_repo = None
+        for repo in config["repos"]:
+            if repo.get("repo") == "local":
+                local_repo = repo
+                break
+
+        if local_repo is None:
+            local_repo = {"repo": "local", "hooks": []}
+            config["repos"].append(local_repo)
+
+        # Ensure hooks list exists in local repo
+        if "hooks" not in local_repo:
+            local_repo["hooks"] = []
+
+        # Check if snippets-validator hook already exists
+        hook_exists = any(
+            hook.get("id") == "snippets-validator" for hook in local_repo["hooks"]
+        )
+
+        if not hook_exists:
+            # Add the snippets validator hook
+            snippets_hook = {
+                "id": "snippets-validator",
+                "name": "snippets-validator",
+                "entry": "python scripts/snippets-validator.py",
+                "language": "system",
+                "files": r"^snippets/.*\.md$",
+                "pass_filenames": True,
+            }
+            local_repo["hooks"].append(snippets_hook)
+
+            # Write updated config back to file
+            with open(precommit_config_path, "w") as f:
+                yaml.dump(config, f, default_flow_style=False, sort_keys=False)
             typer.echo("Updated .pre-commit-config.yaml with snippets validator hook")
         else:
             typer.echo(
@@ -128,11 +179,16 @@ def init_snippets(folder: str) -> None:
     Args:
         folder: The folder to initialize the snippets project in.
     """
+    ensure_git_repo(folder)
+
     snippets_dir = os.path.join(folder, "snippets")
     create_snippets_toml(folder, snippets_dir)
     create_snippets_schema(folder)
     create_snippets_directory(snippets_dir)
     create_precommit_setup(folder, os.path.join(folder, "scripts"))
+
+    typer.echo("Snippets project initialized successfully")
+    typer.echo("Review changes in git repo and commit them before creating snippets")
 
 
 @app.callback()  # type: ignore
@@ -153,6 +209,46 @@ def init(
         raise typer.Exit(1)
 
     init_snippets(folder)
+
+
+@app.command()  # type: ignore
+def clean(
+    folder: str = typer.Argument(".", help="Folder to clean up snippets project in")
+) -> None:
+    """Clean up a snippets project."""
+    typer.echo("Cleaning up a snippets project...")
+
+    if not os.path.exists(folder):
+        typer.echo(f"Error: Folder '{folder}' does not exist.", err=True)
+        raise typer.Exit(1)
+
+    if os.path.exists(os.path.join(folder, "snippets-schema.json")):
+        os.remove(os.path.join(folder, "snippets-schema.json"))
+        typer.echo("Removed snippets-schema.json file")
+    else:
+        typer.echo("snippets-schema.json file does not exist")
+        raise typer.Exit(1)
+
+    if os.path.exists(os.path.join(folder, "snippets.toml")):
+        os.remove(os.path.join(folder, "snippets.toml"))
+        typer.echo("Removed snippets.toml file")
+    else:
+        typer.echo("snippets.toml file does not exist")
+        raise typer.Exit(1)
+
+    if os.path.exists(os.path.join(folder, "snippets")):
+        shutil.rmtree(os.path.join(folder, "snippets"))
+        typer.echo("Removed snippets directory")
+    else:
+        typer.echo("snippets directory does not exist")
+        raise typer.Exit(1)
+
+    if os.path.exists(os.path.join(folder, "scripts", "snippets-validator.py")):
+        os.remove(os.path.join(folder, "scripts", "snippets-validator.py"))
+        typer.echo("Removed snippets-validator.py file")
+    else:
+        typer.echo("snippets-validator.py file does not exist")
+        raise typer.Exit(1)
 
 
 def main() -> None:
