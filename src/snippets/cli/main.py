@@ -39,8 +39,10 @@ def create_snippets_schema(folder: str) -> None:
     snippets_schema_path = os.path.join(folder, "snippets-schema.json")
     if not os.path.exists(snippets_schema_path):
         with open(snippets_schema_path, "w") as f:
-            schema_content = importlib.resources.read_text(
-                "snippets.assets", "snippets-schema.json"
+            schema_content = (
+                importlib.resources.files("snippets.assets")
+                .joinpath("snippets-schema.json")
+                .read_text()
             )
             f.write(schema_content)
             typer.echo(f"Created snippets-schema.json file: {snippets_schema_path}")
@@ -61,12 +63,19 @@ def create_snippets_directory(snippets_dir: str) -> None:
 def create_precommit_setup(folder: str, scripts_dir: str) -> None:
     """Create pre-commit setup with snippets validation."""
 
+    # Create scripts directory if it doesn't exist
+    if not os.path.exists(scripts_dir):
+        os.makedirs(scripts_dir)
+        typer.echo(f"Created scripts directory: {scripts_dir}")
+
     # Copy snippets-validator.py to scripts directory
     validator_path = os.path.join(scripts_dir, "snippets-validator.py")
     if not os.path.exists(validator_path):
         with open(validator_path, "w") as f:
-            validator_content = importlib.resources.read_text(
-                "snippets.assets", "snippets-validator.py"
+            validator_content = (
+                importlib.resources.files("snippets.assets")
+                .joinpath("snippets-validator.py")
+                .read_text()
             )
             f.write(validator_content)
         # Make the script executable

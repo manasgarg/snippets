@@ -730,8 +730,12 @@ dev = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "black" },
+    { name = "isort" },
     { name = "jsonschema" },
+    { name = "mypy" },
     { name = "pre-commit" },
+    { name = "ruff" },
     { name = "types-jsonschema" },
     { name = "types-pyyaml" },
 ]
@@ -754,8 +758,12 @@ provides-extras = ["dev"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "black", specifier = ">=25.1.0" },
+    { name = "isort", specifier = ">=6.0.1" },
     { name = "jsonschema", specifier = ">=4.25.0" },
+    { name = "mypy", specifier = ">=1.17.1" },
     { name = "pre-commit", specifier = ">=4.3.0" },
+    { name = "ruff", specifier = ">=0.12.9" },
     { name = "types-jsonschema", specifier = ">=4.25.0.20250809" },
     { name = "types-pyyaml", specifier = ">=6.0.12.20250809" },
 ]

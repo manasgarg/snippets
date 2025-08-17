@@ -61,7 +61,7 @@ clean:
 	find . -type d -name ".mypy_cache" -exec rm -rf {} +
 	find . -type d -name "htmlcov" -exec rm -rf {} +
 	find . -type f -name ".coverage" -delete
-	rm -rf build/ dist/ .tox/ .venv/
+	rm -rf build/ dist/ .tox/ .ruff_cache/
 
 # Run all checks
 all: format lint check test

@@ -148,8 +148,12 @@ line-ending = "auto"
 
 [dependency-groups]
 dev = [
+    "black>=25.1.0",
+    "isort>=6.0.1",
     "jsonschema>=4.25.0",
+    "mypy>=1.17.1",
     "pre-commit>=4.3.0",
+    "ruff>=0.12.9",
     "types-jsonschema>=4.25.0.20250809",
     "types-pyyaml>=6.0.12.20250809",
 ]
