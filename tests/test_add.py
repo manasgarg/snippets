@@ -65,6 +65,7 @@ def test_add_no_snippets_directory() -> None:
         assert exc_info.value.exit_code == 1
 
 
+@patch("os.unlink")
 @patch("os.isatty")
 @patch("sys.stdin")
 @patch("ulid.ULID")
@@ -74,6 +75,7 @@ def test_add_with_piped_content(
     mock_ulid: MagicMock,
     mock_stdin: MagicMock,
     mock_isatty: MagicMock,
+    mock_unlink: MagicMock,
 ) -> None:
     """Test that add command works with piped content."""
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -113,7 +115,11 @@ def test_add_with_piped_content(
         assert "id: 01HQTEST123456789" in written_content
         assert "This is test content from stdin" in written_content
 
+        # Verify that os.unlink was not called since we're using piped content (no temp file)
+        mock_unlink.assert_not_called()
 
+
+@patch("os.unlink")
 @patch("os.isatty")
 @patch("subprocess.run")
 @patch("tempfile.NamedTemporaryFile")
@@ -125,6 +131,7 @@ def test_add_with_editor(
     mock_tempfile: MagicMock,
     mock_subprocess: MagicMock,
     mock_isatty: MagicMock,
+    mock_unlink: MagicMock,
 ) -> None:
     """Test that add command works with editor."""
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -170,6 +177,9 @@ def test_add_with_editor(
         mock_subprocess.assert_called_once()
         assert "nano" in mock_subprocess.call_args[0][0]  # Default editor
         assert temp_file_path in mock_subprocess.call_args[0][0]
+
+        # Verify that os.unlink was called to clean up the temp file
+        mock_unlink.assert_called_once_with(temp_file_path)
 
 
 @patch("os.isatty")
