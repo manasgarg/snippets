@@ -7,6 +7,7 @@ requires-python = ">=3.11"
 dependencies = [
     "pydantic>=2.11.7",
     "pydantic-settings>=2.10.1",
+    "python-ulid>=3.0.0",
     "typer>=0.16.0",
     "types-click>=7.1.8",
     "types-pyyaml>=6.0.12.20250809",

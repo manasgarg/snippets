@@ -6,6 +6,7 @@ import os
 import shutil
 
 import typer
+import ulid
 
 app = typer.Typer()
 
@@ -258,6 +259,97 @@ def clean(
     else:
         typer.echo("snippets-validator.py file does not exist")
         raise typer.Exit(1)
+
+
+@app.command()  # type: ignore
+def add(folder: str = typer.Argument(".", help="Folder to add snippet in")) -> None:
+    """Add a new snippet."""
+    typer.echo("Adding a new snippet...")
+
+    if not os.path.exists(folder):
+        typer.echo(f"Error: Folder '{folder}' does not exist.", err=True)
+        raise typer.Exit(1)
+
+    # Find git root by walking up the directory tree
+    current_path = os.path.abspath(folder)
+    git_root = None
+
+    while current_path != os.path.dirname(current_path):  # Stop at filesystem root
+        if os.path.exists(os.path.join(current_path, ".git")):
+            git_root = current_path
+            break
+        current_path = os.path.dirname(current_path)
+
+    if git_root is None:
+        typer.echo("Error: Not in a git repository.", err=True)
+        raise typer.Exit(1)
+
+    if not os.path.exists(os.path.join(git_root, "snippets")):
+        typer.echo("Error: snippets directory does not exist in git root.", err=True)
+        raise typer.Exit(1)
+
+    # Generate a new ULID for the snippet
+    snippet_id = str(ulid.ULID())
+    typer.echo(f"Generated snippet ID: {snippet_id}")
+
+    # Create a new snippet file
+    snippet_file = os.path.join(git_root, "snippets", f"{snippet_id}.md")
+    if os.path.exists(snippet_file):
+        typer.echo(f"Error: Snippet file '{snippet_file}' already exists.", err=True)
+        raise typer.Exit(1)
+
+    content = ""
+
+    # Check if content is being piped in
+    if not os.isatty(0):  # stdin is not a terminal (i.e., piped input)
+        import sys
+
+        content = sys.stdin.read().strip()
+    else:
+        # Open a temporary file in the system's default editor
+        import subprocess
+        import tempfile
+
+        # Get the default editor from environment variables
+        editor = os.environ.get("EDITOR") or os.environ.get("VISUAL") or "nano"
+
+        # Create a temporary file
+        with tempfile.NamedTemporaryFile(
+            mode="w+", suffix=".md", delete=False
+        ) as temp_file:
+            temp_file_path = temp_file.name
+
+        try:
+            subprocess.run([editor, temp_file_path], check=True)
+        except subprocess.CalledProcessError as err:
+            typer.echo(f"Error: Failed to open editor '{editor}'.", err=True)
+            os.unlink(temp_file_path)  # Clean up temp file
+            raise typer.Exit(1) from err
+        except FileNotFoundError as err:
+            typer.echo(f"Error: Editor '{editor}' not found.", err=True)
+            os.unlink(temp_file_path)  # Clean up temp file
+            raise typer.Exit(1) from err
+
+        # Read the contents of the temporary file
+        try:
+            with open(temp_file_path) as temp_file:
+                content = temp_file.read().strip()
+        finally:
+            os.unlink(temp_file_path)  # Clean up temp file
+
+    if content:
+        # Create snippet file with YAML front matter
+        with open(snippet_file, "w") as f:
+            f.write("---\n")
+            f.write(f"id: {snippet_id}\n")
+            f.write("---\n")
+            f.write(content)
+            f.write("\n")
+    else:
+        typer.echo("Error: No content provided.", err=True)
+        raise typer.Exit(1)
+
+    typer.echo(f"Created snippet file: {snippet_file}")
 
 
 def main() -> None:
