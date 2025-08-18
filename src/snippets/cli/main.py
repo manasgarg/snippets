@@ -342,7 +342,7 @@ def add(folder: str = typer.Argument(".", help="Folder to add snippet in")) -> N
         with open(snippet_file, "w") as f:
             f.write("---\n")
             f.write(f"id: {snippet_id}\n")
-            f.write("---\n")
+            f.write("---\n\n")
             f.write(content)
             f.write("\n")
     else:
