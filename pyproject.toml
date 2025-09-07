@@ -5,17 +5,11 @@ description = "Documentation Snippets"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "en-core-web-trf",
-    "nltk>=3.9.1",
     "numpy>=2.3.2",
     "pydantic>=2.11.7",
     "pydantic-settings>=2.10.1",
     "python-ulid>=3.0.0",
     "pyyaml>=6.0.2",
-    "scikit-learn>=1.7.1",
-    "spacy>=3.7.5",
-    "textstat>=0.7.8",
-    "thinc>=8.2.4",
     "typer>=0.16.0",
     "types-click>=7.1.8",
     "types-pyyaml>=6.0.12.20250809",
@@ -155,9 +149,6 @@ quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
-
-[tool.uv.sources]
-en-core-web-trf = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_trf-3.7.3/en_core_web_trf-3.7.3-py3-none-any.whl" }
 
 [dependency-groups]
 dev = [
