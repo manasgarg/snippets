@@ -4,7 +4,7 @@ import tempfile
 import pytest
 import typer
 
-from snippets.cli.main import init
+from snippets.cli.init import init
 
 
 def test_init_nonexisting_directory() -> None:
