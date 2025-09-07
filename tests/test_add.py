@@ -3,29 +3,28 @@ import tempfile
 from typing import Any
 from unittest.mock import MagicMock, mock_open, patch
 
-import pytest
-import typer
+from typer.testing import CliRunner
 
-from snippets.cli.main import add
+from snippets.cli.main import app
 
 
 def test_add_nonexisting_directory() -> None:
     """Test that add command fails when directory doesn't exist."""
+    runner = CliRunner()
     with tempfile.TemporaryDirectory() as temp_dir:
         nonexistent_dir = os.path.join(temp_dir, "nonexistent")
 
         # Ensure the directory doesn't exist
         assert not os.path.exists(nonexistent_dir)
 
-        # Test that add raises typer.Exit with code 1
-        with pytest.raises(typer.Exit) as exc_info:
-            add(nonexistent_dir)
-
-        assert exc_info.value.exit_code == 1
+        # Test that add command fails with exit code 1
+        result = runner.invoke(app, ["add", "--repo", nonexistent_dir])
+        assert result.exit_code == 1
 
 
 def test_add_non_git_directory() -> None:
     """Test that add command fails when directory is not in a git repository."""
+    runner = CliRunner()
     with tempfile.TemporaryDirectory() as temp_dir:
         # Create a directory that exists but is not a git repository
         test_dir = os.path.join(temp_dir, "test_project")
@@ -35,15 +34,14 @@ def test_add_non_git_directory() -> None:
         assert os.path.exists(test_dir)
         assert not os.path.exists(os.path.join(test_dir, ".git"))
 
-        # Test that add raises typer.Exit with code 1
-        with pytest.raises(typer.Exit) as exc_info:
-            add(test_dir)
-
-        assert exc_info.value.exit_code == 1
+        # Test that add command fails with exit code 1
+        result = runner.invoke(app, ["add", "--repo", test_dir])
+        assert result.exit_code == 1
 
 
 def test_add_no_snippets_directory() -> None:
     """Test that add command fails when snippets directory doesn't exist."""
+    runner = CliRunner()
     with tempfile.TemporaryDirectory() as temp_dir:
         # Create a directory and initialize it as a git repository
         test_dir = os.path.join(temp_dir, "test_project")
@@ -58,11 +56,9 @@ def test_add_no_snippets_directory() -> None:
         assert os.path.exists(git_dir)
         assert not os.path.exists(os.path.join(test_dir, "snippets"))
 
-        # Test that add raises typer.Exit with code 1
-        with pytest.raises(typer.Exit) as exc_info:
-            add(test_dir)
-
-        assert exc_info.value.exit_code == 1
+        # Test that add command fails with exit code 1
+        result = runner.invoke(app, ["add", "--repo", test_dir])
+        assert result.exit_code == 1
 
 
 @patch("os.unlink")
@@ -78,6 +74,7 @@ def test_add_with_piped_content(
     mock_unlink: MagicMock,
 ) -> None:
     """Test that add command works with piped content."""
+    runner = CliRunner()
     with tempfile.TemporaryDirectory() as temp_dir:
         # Create a directory and initialize it as a git repository
         test_dir = os.path.join(temp_dir, "test_project")
@@ -100,8 +97,11 @@ def test_add_with_piped_content(
         # Mock file operations
         mock_file.return_value.__enter__.return_value = mock_file.return_value
 
-        # Test that add succeeds without raising an exception
-        add(test_dir)
+        # Test that add command succeeds
+        result = runner.invoke(
+            app, ["add", "--repo", test_dir], input="This is test content from stdin"
+        )
+        assert result.exit_code == 0
 
         # Verify that a file was opened for writing with the expected path
         expected_file_path = os.path.join(snippets_dir, "01HQTEST123456789.md")
@@ -134,6 +134,7 @@ def test_add_with_editor(
     mock_unlink: MagicMock,
 ) -> None:
     """Test that add command works with editor."""
+    runner = CliRunner()
     with tempfile.TemporaryDirectory() as temp_dir:
         # Create a directory and initialize it as a git repository
         test_dir = os.path.join(temp_dir, "test_project")
@@ -170,12 +171,13 @@ def test_add_with_editor(
 
         mock_file.side_effect = mock_open_side_effect
 
-        # Test that add succeeds without raising an exception
-        add(test_dir)
+        # Test that add command succeeds
+        result = runner.invoke(app, ["add", "--repo", test_dir])
+        assert result.exit_code == 0
 
         # Verify that subprocess was called with the editor
         mock_subprocess.assert_called_once()
-        assert "nano" in mock_subprocess.call_args[0][0]  # Default editor
+        assert "vim" in mock_subprocess.call_args[0][0]  # Default editor
         assert temp_file_path in mock_subprocess.call_args[0][0]
 
         # Verify that os.unlink was called to clean up the temp file
@@ -186,6 +188,7 @@ def test_add_with_editor(
 @patch("sys.stdin")
 def test_add_with_empty_content(mock_stdin: MagicMock, mock_isatty: MagicMock) -> None:
     """Test that add command fails when no content is provided."""
+    runner = CliRunner()
     with tempfile.TemporaryDirectory() as temp_dir:
         # Create a directory and initialize it as a git repository
         test_dir = os.path.join(temp_dir, "test_project")
@@ -201,8 +204,6 @@ def test_add_with_empty_content(mock_stdin: MagicMock, mock_isatty: MagicMock) -
         mock_isatty.return_value = False
         mock_stdin.read.return_value = ""
 
-        # Test that add raises typer.Exit with code 1
-        with pytest.raises(typer.Exit) as exc_info:
-            add(test_dir)
-
-        assert exc_info.value.exit_code == 1
+        # Test that add command fails with exit code 1
+        result = runner.invoke(app, ["add", "--repo", test_dir], input="")
+        assert result.exit_code == 1
