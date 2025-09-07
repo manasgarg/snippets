@@ -113,6 +113,8 @@ def test_add_with_piped_content(
         )
         assert "---" in written_content
         assert "id: 01HQTEST123456789" in written_content
+        assert "created_at:" in written_content
+        assert "updated_at:" in written_content
         assert "This is test content from stdin" in written_content
 
         # Verify that os.unlink was not called since we're using piped content (no temp file)

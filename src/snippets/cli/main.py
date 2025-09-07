@@ -4,6 +4,7 @@
 import importlib.resources
 import os
 import shutil
+from datetime import datetime
 
 import typer
 import ulid
@@ -424,6 +425,8 @@ def create_snippet_file(
         f.write(f"id: {snippet_id}\n")
         f.write(f"title: {title}\n")
         f.write(f"slug: {slug}\n")
+        f.write(f"created_at: {datetime.now().isoformat()}\n")
+        f.write(f"updated_at: {datetime.now().isoformat()}\n")
         f.write("---\n\n")
         f.write(content)
         f.write("\n")

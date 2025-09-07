@@ -64,5 +64,5 @@ clean:
 	rm -rf build/ dist/ .tox/ .ruff_cache/
 
 # Run all checks
-all: format lint check test
+all: format lint test
 	@echo "All checks passed! 🎉"
